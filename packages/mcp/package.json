@@ -1,6 +1,6 @@
 {
   "name": "@thyn-ai/sqai-mcp",
-  "version": "0.1.16",
+  "version": "0.1.18",
   "description": "SQAI (Structured Query AI) MCP server — the three governed, deterministic, read-only tools (listSources, queryData, explainQuery) over stdio for any MCP host.",
   "license": "Apache-2.0",
   "type": "module",

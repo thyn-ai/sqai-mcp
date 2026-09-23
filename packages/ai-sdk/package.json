@@ -1,7 +1,7 @@
 {
   "name": "@thyn-ai/sqai-ai-sdk",
-  "version": "0.1.14",
-  "description": "Vercel AI SDK tools for SQAI (Structured Query AI) \u2014 deterministic, read-only structured-data tools for AI agents.",
+  "version": "0.1.18",
+  "description": "Vercel AI SDK tools for SQAI (Structured Query AI) — deterministic, read-only structured-data tools for AI agents.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
