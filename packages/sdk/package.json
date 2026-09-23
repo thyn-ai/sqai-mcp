@@ -1,7 +1,7 @@
 {
   "name": "@thyn-ai/sqai",
-  "version": "0.1.14",
-  "description": "SQAI (Structured Query AI) \u2014 the deterministic, read-only structured-data SDK for AI agents, with full provenance.",
+  "version": "0.1.18",
+  "description": "SQAI (Structured Query AI) — the deterministic, read-only structured-data SDK for AI agents, with full provenance.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {

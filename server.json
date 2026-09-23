@@ -8,12 +8,12 @@
     "source": "github"
   },
   "websiteUrl": "https://sqai.com",
-  "version": "0.1.16",
+  "version": "0.1.18",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@thyn-ai/sqai-mcp",
-      "version": "0.1.16",
+      "version": "0.1.18",
       "transport": {
         "type": "stdio"
       },
