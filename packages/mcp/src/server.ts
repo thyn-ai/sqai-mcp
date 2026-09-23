@@ -1,16 +1,27 @@
 /** SQAI MCP server — the three governed SQAI tools over the Model Context Protocol.
  *
- * The tool surface is READ, not forked: every advertised description and
- * inputSchema comes straight off the tool objects built by
- * createSqaiTools(@thyn-ai/sqai-ai-sdk), so the TDQS text and the Zod v4
- * schemas have exactly one source of truth (packages/ai-sdk/src/tools.ts and
- * schemas.ts). This module only translates them into MCP wire shape and adds
- * the spec annotations.
+ * The tool surface is READ, not forked: every advertised inputSchema comes
+ * straight off the tool objects built by createSqaiTools(@thyn-ai/sqai-ai-sdk),
+ * so the TDQS text and the Zod v4 schemas have exactly one source of truth
+ * (packages/ai-sdk/src/tools.ts and schemas.ts). This module translates them
+ * into MCP wire shape, adds the spec annotations, and wraps the served
+ * descriptions with the uniform-gate disclosure (see GATE_DISCLOSURE — the
+ * ai-sdk descriptions stay verbatim because the SDK-level query plane is not
+ * gated; the MCP execution surface is).
+ *
+ * Uniform license gate (owner rule: every tool execution requires the free
+ * community login; initialize/tools/list stay credential-free). Every
+ * tools/call for a registered tool runs ensureLocalLoginKey from
+ * @thyn-ai/sqai — verbatim the device-login check the computation plane
+ * already runs before provisioning the managed runtime — so listSources,
+ * queryData (both kinds) and explainQuery fail with the identical structured
+ * login_required payload an unauthenticated computation returns. Unknown-tool
+ * answers stay credential-free: they are discovery, not execution.
  *
  * Never-throw semantics are preserved end to end: the SQAI tools already
  * return structured errors instead of throwing, and every MCP-level failure
- * (unknown tool, invalid arguments, unexpected throw) is mapped to a
- * structured isError result — the server process never crashes on input. */
+ * (unknown tool, invalid arguments, missing login, unexpected throw) is mapped
+ * to a structured isError result — the server process never crashes on input. */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
@@ -24,6 +35,8 @@ import { z } from "zod";
 import {
   createSQAI,
   createSqaiTools,
+  ensureLocalLoginKey,
+  SqaiError,
   type SQAIToolkit,
   type SqaiSourceInput,
   type SqaiTool,
@@ -110,11 +123,24 @@ function descriptionOf(tool: SqaiTool<unknown, unknown>): string {
   return description ?? "";
 }
 
+/** The uniform-gate disclosure appended to every served description. The
+ * ai-sdk tool objects keep their verbatim descriptions (at SDK level the
+ * in-process query plane is ungated); the MCP layer wraps at advertise time
+ * because over MCP EVERY tool execution requires the free community login.
+ * Exported so tests assert the exact text. */
+export const GATE_DISCLOSURE =
+  "Execution requires a free community login (`sqai login` device registration, or " +
+  "SQAI_API_KEY) — fully offline thereafter.";
+
+function gatedDescription(tool: SqaiTool<unknown, unknown>): string {
+  return `${descriptionOf(tool)} ${GATE_DISCLOSURE}`;
+}
+
 export function listToolsResult(registry: RegisteredTool[]): ListToolsResult {
   return {
     tools: registry.map(entry => ({
       name: entry.name,
-      description: descriptionOf(entry.tool),
+      description: gatedDescription(entry.tool),
       inputSchema: mcpInputSchema(entry.tool) as ListToolsResult["tools"][number]["inputSchema"],
       annotations: entry.annotations,
     })),
@@ -137,6 +163,28 @@ function errorResult(error: StructuredError): CallToolResult {
   };
 }
 
+/** Run the shared device-login gate. On failure, return the SqaiError's
+ * toResult() payload — key-for-key the object the AI-SDK error mapping emits
+ * for an unauthenticated computation — so a gated tools/call is byte-for-byte
+ * indistinguishable from the computation plane's own login_required. */
+async function licenseGateFailure(): Promise<CallToolResult | null> {
+  try {
+    await ensureLocalLoginKey();
+    return null;
+  } catch (error) {
+    if (error instanceof SqaiError) {
+      return errorResult(error.toResult());
+    }
+    return errorResult({
+      status: "error",
+      code: "internal_error",
+      message: error instanceof Error ? error.message : String(error),
+      retryable: false,
+      request_id: null,
+    });
+  }
+}
+
 /** Execute one tools/call. Every failure mode returns a structured result;
  * this function never throws. */
 export async function callTool(
@@ -153,6 +201,13 @@ export async function callTool(
       retryable: false,
       request_id: null,
     });
+  }
+  // Uniform license gate: once the tool name resolves, everything downstream —
+  // argument validation included — is execution, and every execution requires
+  // the free community login. initialize and tools/list never reach this path.
+  const gateFailure = await licenseGateFailure();
+  if (gateFailure) {
+    return gateFailure;
   }
   const parsed = zodSchemaOf(entry.tool).safeParse(args ?? {});
   if (!parsed.success) {

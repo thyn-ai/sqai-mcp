@@ -13,7 +13,7 @@ The tool surface is not a fork: this server reads descriptions, Zod input schema
 npx @thyn-ai/sqai-mcp
 ```
 
-The server speaks newline-delimited JSON-RPC 2.0 on stdio. With zero environment it answers `initialize` and `tools/list` immediately — sources connect lazily on the first tool call, and a connection failure comes back as a structured `source_connection_failed` error, never a crash.
+The server speaks newline-delimited JSON-RPC 2.0 on stdio. With zero environment it answers `initialize` and `tools/list` immediately — introspection needs no credentials. Executing any tool requires a free community login (`sqai login` / device registration) — fully offline thereafter; without it every tools/call returns a structured `login_required` error, never a crash. Sources connect lazily on the first tool call, and a connection failure comes back as a structured `source_connection_failed` error, never a crash.
 
 ### Claude Desktop / Cursor
 
@@ -36,7 +36,7 @@ Environment (all optional):
 | Variable | Meaning |
 | --- | --- |
 | `SQAI_SOURCES` | JSON array of `SqaiSourceInput`: a path/URL string, an array of row objects, or `{ "data": …, "name": "…" }`. Connects lazily. |
-| `SQAI_API_KEY` | API key for licensing / API mode (semantics owned by `@thyn-ai/sqai`). |
+| `SQAI_API_KEY` | API key for licensing / API mode (semantics owned by `@thyn-ai/sqai`). Not needed for introspection; required for tool execution unless `sqai login` has cached a device key. |
 | `SQAI_DEPLOYMENT_URL` | Private deployment endpoint; selects deployment mode when present. |
 
 A malformed `SQAI_SOURCES` fails fast at startup with a structured `invalid_sources_env` error on stderr — the server never serves a half-valid configuration.
@@ -55,7 +55,7 @@ Errors are structured payloads (`status: "error"`, `code`, `message`, `retryable
 
 ## Licensing
 
-The query plane runs in-process and needs no account. The computation plane is free on 1 machine with a one-time device registration (`npx @thyn-ai/sqai-cli login`, or `sqai login`) — licensing moves a signed token, never your data. Without registration, computation calls return a structured licensing error by design; queries keep working.
+Introspection (`initialize` / `tools/list`) needs no credentials. Executing any of the three tools requires a free community login (`npx @thyn-ai/sqai-cli login`, or `sqai login` — device registration) — fully offline thereafter; licensing moves a signed token, never your data. Without it, every tool call — local CSV reads included — returns a structured `login_required` error by design.
 
 ## Links
 

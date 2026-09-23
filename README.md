@@ -63,9 +63,12 @@ npx @thyn-ai/sqai-mcp
 }
 ```
 
-Zero environment is a valid configuration: `initialize` and `tools/list` answer
-with no credentials (sources connect lazily on the first tool call). `SQAI_API_KEY`
-and `SQAI_DEPLOYMENT_URL` keep their usual semantics from `@thyn-ai/sqai`.
+Introspection (`initialize` / `tools/list`) needs no credentials — zero
+environment is a valid configuration. Executing any of the three tools requires
+a free community login (`sqai login` once / device registration, or
+`SQAI_API_KEY`) — fully offline thereafter; without it every tools/call returns
+a structured `login_required` error. `SQAI_DEPLOYMENT_URL` keeps its usual
+semantics from `@thyn-ai/sqai`.
 
 | Tool | What it does |
 | --- | --- |
@@ -74,10 +77,11 @@ and `SQAI_DEPLOYMENT_URL` keep their usual semantics from `@thyn-ai/sqai`.
 | `explainQuery` | Dry-run: resolved plan, `plan_hash`, validation — or a computation-signature check with a preview `invocation_hash`. |
 
 All three are annotated `readOnlyHint: true`, `destructiveHint: false`,
-`idempotentHint: true`, `openWorldHint: false`. The computation plane is free on
-1 machine with a one-time device registration (`sqai login`) — licensing moves a
-signed token, never your data; without it, computation calls return a structured
-licensing error by design and queries keep working.
+`idempotentHint: true`, `openWorldHint: false`. All three execute under the one
+uniform license gate: free on 1 machine with a one-time device registration
+(`sqai login`) — licensing moves a signed token, never your data; without it,
+every tool call — local CSV reads included — returns a structured
+`login_required` error by design.
 
 ## What works today
 

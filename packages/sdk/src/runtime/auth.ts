@@ -16,6 +16,8 @@ import { readFileSync, writeFileSync, mkdirSync, chmodSync, existsSync, rmSync }
 import { homedir, hostname } from "node:os";
 import { join } from "node:path";
 
+import { SqaiError } from "../errors.js";
+
 // Product identity for the shared device flow.
 const CLIENT_ID = "sqai-cli";
 const SCOPE = "sqai";
@@ -54,6 +56,34 @@ function readSecret(path: string): string | undefined {
 /** Resolve the SQAI API key for the runtime: $SQAI_API_KEY, legacy env, else the cached key. */
 export async function readCachedApiKey(): Promise<string | undefined> {
   return process.env.SQAI_API_KEY ?? process.env.ALGENTA_API_KEY ?? readSecret(apiKeyPath());
+}
+
+/**
+ * The one device-login gate for local execution, shared by every surface.
+ *
+ * An explicit env key (current or legacy) wins; otherwise the key cached by
+ * `sqai login` under ~/.sqai is promoted into the environment so the runtime
+ * daemon inherits it; otherwise a structured `login_required` SqaiError. The
+ * managed-runtime provisioner runs this before spawning the daemon
+ * (runtime/provision.ts), and the MCP server runs it before every tools/call —
+ * local-mode licensing has exactly one mechanism, so every execution surface
+ * fails with the identical error.
+ */
+export async function ensureLocalLoginKey(): Promise<void> {
+  if (process.env.ALGENTA_API_KEY || process.env.DE_API_KEY) {
+    return;
+  }
+  const key = await readCachedApiKey();
+  if (key) {
+    process.env.ALGENTA_API_KEY = key;
+    return;
+  }
+  throw new SqaiError(
+    "login_required",
+    "Local compute requires a free SQAI device login. Run `sqai login` once, " +
+      "or set SQAI_API_KEY in this process.",
+    { details: { reason: "login_key_missing" } },
+  );
 }
 
 function cache(path: string, value: string): void {

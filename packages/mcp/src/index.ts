@@ -4,6 +4,11 @@
  * newline-delimited JSON-RPC on stdio. stdout carries protocol bytes only;
  * diagnostics go to stderr.
  *
+ * Introspection (initialize / tools/list) is credential-free. Every tools/call
+ * passes the uniform device-login gate (@thyn-ai/sqai ensureLocalLoginKey):
+ * without a key it returns a structured login_required error — never a crash,
+ * and the server keeps serving.
+ *
  * Environment (all optional — zero env is a valid configuration):
  *   SQAI_SOURCES         JSON array of SqaiSourceInput (paths, row arrays, { data, name? })
  *   SQAI_API_KEY         licensing / API mode (semantics owned by @thyn-ai/sqai)

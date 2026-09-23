@@ -7,9 +7,13 @@
  *
  * The headline contract: with ZERO SQAI_* env the server answers initialize
  * and tools/list (the toolkit's lazy-source behavior), so any MCP host can
- * introspect the three governed tools with no credentials and no sources. */
+ * introspect the three governed tools with no credentials and no sources —
+ * while every tools/call runs the uniform device-login gate and returns the
+ * computation plane's structured login_required until `sqai login` (or an
+ * API key) is present. */
 
 import { spawn, type ChildProcess } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,9 +49,11 @@ const INITIALIZE_PARAMS = {
 
 /** Deterministic zero-config environment: no credentials, no deployment URL,
  * an isolated SQAI_HOME, a closed daemon port, and runtime auto-install off
- * so nothing ever reaches the network. */
-function testEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
-  return {
+ * so nothing ever reaches the network. An `extra` value of undefined DELETES
+ * the base key (the login gate treats a present-but-empty SQAI_API_KEY as an
+ * explicit empty key and never falls through to the cached login). */
+function testEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     ALGENTA_API_KEY: "",
     DE_API_KEY: "",
@@ -57,15 +63,22 @@ function testEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
     SQAI_HOME: TEST_SQAI_HOME,
     SQAI_RUNTIME_AUTO_INSTALL: "0",
     ALGENTA_DAEMON_TCP: "127.0.0.1:9",
-    ...extra,
   };
+  for (const [key, value] of Object.entries(extra)) {
+    if (value === undefined) {
+      delete env[key];
+    } else {
+      env[key] = value;
+    }
+  }
+  return env;
 }
 
 /** Feed newline-delimited JSON-RPC to the server, close stdin, collect every
  * stdout response until exit. Kills the child after `timeoutMs`. */
 function runServer(
   requests: string[],
-  env: Record<string, string> = {},
+  env: Record<string, string | undefined> = {},
   timeoutMs = 30_000,
 ): Promise<RpcSession> {
   return new Promise((resolve, reject) => {
@@ -158,11 +171,59 @@ describe("sqai-mcp stdio e2e", () => {
         openWorldHint: false,
       });
       expect(typeof tool.description).toBe("string");
+      // Every served description discloses the uniform free-login requirement.
+      expect(String(tool.description)).toContain("free community login");
       expect((tool.inputSchema as Record<string, unknown>).type).toBe("object");
     }
   }, 45_000);
 
-  it("serves a real deterministic query over an inline source from SQAI_SOURCES", async () => {
+  it("gates every tools/call on the free device login with ZERO env — and keeps serving", async () => {
+    const emptyHome = mkdtempSync(join(tmpdir(), "sqai-mcp-e2e-no-login-"));
+    const session = await runServer(
+      [
+        rpc(1, "initialize", INITIALIZE_PARAMS),
+        rpc(null, "notifications/initialized"),
+        rpc(2, "tools/call", { name: "listSources", arguments: {} }),
+        rpc(3, "tools/call", {
+          name: "queryData",
+          arguments: { version: "1", kind: "query", spec: { metric: "revenue" } },
+        }),
+        rpc(4, "tools/call", {
+          name: "queryData",
+          arguments: {
+            version: "1",
+            kind: "computation",
+            spec: { module: "stats", function: "median", args: [[1, 2, 3], 3] },
+          },
+        }),
+        rpc(5, "tools/call", {
+          name: "explainQuery",
+          arguments: { version: "1", kind: "query", spec: { metric: "revenue" } },
+        }),
+        // After four gated calls the server must still be up for introspection.
+        rpc(6, "tools/list"),
+      ],
+      { SQAI_HOME: emptyHome },
+    );
+
+    expect(session.exitCode).toBe(0);
+    for (const id of [2, 3, 4, 5]) {
+      expect(resultOf(session, id).isError).toBe(true);
+      expect(callPayload(session, id)).toEqual({
+        status: "error",
+        code: "login_required",
+        message:
+          "Local compute requires a free SQAI device login. Run `sqai login` once, " +
+          "or set SQAI_API_KEY in this process.",
+        retryable: false,
+        request_id: null,
+      });
+    }
+    const tools = (resultOf(session, 6).tools ?? []) as Array<Record<string, unknown>>;
+    expect(tools.map(tool => tool.name)).toEqual(["listSources", "queryData", "explainQuery"]);
+  }, 45_000);
+
+  it("serves a real deterministic query over an inline source from SQAI_SOURCES with a cached login", async () => {
     const sources = JSON.stringify([
       {
         data: [
@@ -173,6 +234,11 @@ describe("sqai-mcp stdio e2e", () => {
         name: "orders",
       },
     ]);
+    // The valid-license path, stubbed exactly like the repo's license tests:
+    // the post-`sqai login` state is a cached device key under SQAI_HOME,
+    // resolved fully offline — no env keys, no control-plane round-trip.
+    const licensedHome = mkdtempSync(join(tmpdir(), "sqai-mcp-e2e-licensed-"));
+    writeFileSync(join(licensedHome, "api_key"), "sqai-mcp-e2e-stub-key\n", "utf8");
     const session = await runServer(
       [
         rpc(1, "initialize", INITIALIZE_PARAMS),
@@ -187,7 +253,13 @@ describe("sqai-mcp stdio e2e", () => {
         }),
         rpc(3, "tools/call", { name: "not_a_tool", arguments: {} }),
       ],
-      { SQAI_SOURCES: sources },
+      {
+        SQAI_SOURCES: sources,
+        SQAI_HOME: licensedHome,
+        SQAI_API_KEY: undefined,
+        ALGENTA_API_KEY: undefined,
+        DE_API_KEY: undefined,
+      },
     );
 
     expect(session.exitCode).toBe(0);

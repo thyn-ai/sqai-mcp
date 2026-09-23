@@ -13,7 +13,7 @@ export {
 export * from "./schemas.js";
 
 // Substrate types agents commonly need alongside the tools.
-export { SQAI, SqaiError } from "@thyn-ai/sqai";
+export { SQAI, SqaiError, ensureLocalLoginKey } from "@thyn-ai/sqai";
 export type {
   SqaiValue,
   ComputationBinding,

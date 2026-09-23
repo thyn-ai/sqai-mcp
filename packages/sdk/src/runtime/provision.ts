@@ -23,7 +23,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { MojoRuntime, type MojoRuntimeConfig } from "algenta-sdk";
-import { readCachedApiKey } from "./auth.js";
+import { ensureLocalLoginKey as ensureSharedLocalLoginKey } from "./auth.js";
 
 import { SqaiError } from "../errors.js";
 import type { CapabilityContract } from "../contract.js";
@@ -244,20 +244,12 @@ export class RuntimeProvisioner {
   }
 
   private async ensureLocalLoginKey(): Promise<void> {
-    if (this.options.runtimeFactory || process.env.ALGENTA_API_KEY || process.env.DE_API_KEY) {
+    // A BYO runtime (tests / custom deployments) authenticates itself; every
+    // other local path goes through the one shared device-login gate.
+    if (this.options.runtimeFactory) {
       return;
     }
-    const key = await readCachedApiKey();
-    if (key) {
-      process.env.ALGENTA_API_KEY = key;
-      return;
-    }
-      throw new SqaiError(
-        "login_required",
-        "Local compute requires a free SQAI device login. Run `sqai login` once, " +
-          "or set SQAI_API_KEY in this process.",
-        { details: { reason: "login_key_missing" } },
-      );
+    await ensureSharedLocalLoginKey();
   }
 
   private cacheDir(): string {

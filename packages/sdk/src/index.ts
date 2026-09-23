@@ -16,7 +16,7 @@ export {
   runtimeCacheDir,
   type RuntimeStatus,
 } from "./runtime/provision.js";
-export { login, logout, sqaiHome, readCachedApiKey, LoginError, type LoginResult } from "./runtime/auth.js";
+export { login, logout, sqaiHome, readCachedApiKey, ensureLocalLoginKey, LoginError, type LoginResult } from "./runtime/auth.js";
 export {
   validateComputation,
   lookupCapability,
