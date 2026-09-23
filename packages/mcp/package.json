@@ -1,0 +1,51 @@
+{
+  "name": "@thyn-ai/sqai-mcp",
+  "version": "0.1.15",
+  "description": "SQAI (Structured Query AI) MCP server — the three governed, deterministic, read-only tools (listSources, queryData, explainQuery) over stdio for any MCP host.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": {
+    "sqai-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@thyn-ai/sqai-ai-sdk": "workspace:^",
+    "ai": "^7.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "tsup": "^8.3.5",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thyn-ai/sqai-mcp.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://sqai.com",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sqai",
+    "structured-data",
+    "deterministic",
+    "read-only",
+    "agents"
+  ]
+}

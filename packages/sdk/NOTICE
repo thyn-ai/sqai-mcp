@@ -1,0 +1,9 @@
+SQAI — Structured Query AI
+Copyright (c) 2026 Seville AI Technologies, Inc. d/b/a Thyn (thyn.ai)
+
+This product includes software developed by Seville AI Technologies, Inc. d/b/a Thyn
+(https://thyn.ai).
+
+SQAI is built on the Algenta deterministic execution engine
+(https://algenta.ai) and consumes the published algenta-sdk (npm) and
+algenta-core (PyPI) packages.

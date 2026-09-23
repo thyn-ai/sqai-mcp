@@ -1,0 +1,62 @@
+{
+  "name": "@thyn-ai/sqai-ai-sdk",
+  "version": "0.1.14",
+  "description": "Vercel AI SDK tools for SQAI (Structured Query AI) \u2014 deterministic, read-only structured-data tools for AI agents.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@thyn-ai/sqai": "workspace:^"
+  },
+  "peerDependencies": {
+    "ai": "^7.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "ai": "^7.0.99",
+    "tsup": "^8.3.5",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.0",
+    "zod": "^4.6.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thyn-ai/sqai.git",
+    "directory": "packages/ai-sdk"
+  },
+  "homepage": "https://sqai.com",
+  "keywords": [
+    "ai",
+    "agents",
+    "ai-sdk",
+    "vercel",
+    "tools",
+    "structured-data",
+    "deterministic",
+    "sqai"
+  ]
+}
