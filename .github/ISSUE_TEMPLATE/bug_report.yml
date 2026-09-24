@@ -1,0 +1,33 @@
+name: Bug report
+description: Something in the SQAI MCP server or SDK packages isn't working as expected.
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: e.g. @thyn-ai/sqai-mcp 0.1.16
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead. Name the tool (listSources / queryData / explainQuery) if one is involved.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: A small snippet or tool call that reproduces the issue.
+      render: typescript
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node/Python version, MCP host (Claude Desktop, Cursor, ...), and anything else relevant.
+    validations:
+      required: false

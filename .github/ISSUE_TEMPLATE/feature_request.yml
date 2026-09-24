@@ -1,0 +1,17 @@
+name: Feature request
+description: Request a capability the SQAI tools don't expose today.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What capability do you want?
+      description: Describe the use case, not just the API shape you'd guess at. Note that the tools are deliberately deterministic and read-only.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why isn't an existing tool sufficient?
+    validations:
+      required: false

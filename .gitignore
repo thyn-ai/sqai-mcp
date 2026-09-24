@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / TypeScript
+node_modules/
+*.tsbuildinfo
+npm-debug.log*
+.turbo/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets — never commit key material of any kind
+*.pem
+*.key
