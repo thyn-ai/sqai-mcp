@@ -84,7 +84,7 @@ Each source is a `SqaiSourceInput` — a path string, an array of records, or `{
 {% step %}
 #### Register the tools
 
-`sqai.tools(options?)` returns exactly three tools — `listSources`, `queryData`, `explainQuery` — typed as `SqaiToolSet`, which is assignable to the AI SDK's `ToolSet` with no cast. Pass it straight to `tools`.
+`sqai.tools(options?)` returns exactly four tools — `listSources`, `queryData`, `explainQuery`, `getResult` — typed as `SqaiToolSet`, which is assignable to the AI SDK's `ToolSet` with no cast. Pass it straight to `tools`.
 
 ```ts
 import { generateText, isStepCount } from "ai";
@@ -248,7 +248,7 @@ Every number the agent stated is anchored to a hash. Re-run the same intent agai
 **One-time setup, then warm.** The query plane is in-process — sub-millisecond to low-ms, no separate service, no key. After the one-time free `sqai login` device enrollment, the compute plane provisions the signed runtime **once** on the first computation (download → verify → extract → spawn, ~110s), then stays resident. There is **no per-query cold start**: the `finance.npv` call above returned in **0.83 ms**. See [Determinism & provenance](determinism.md).
 {% endhint %}
 
-## The three tools
+## The four tools
 
 <table data-view="cards">
 <thead><tr><th></th><th></th><th></th></tr></thead>
@@ -256,6 +256,7 @@ Every number the agent stated is anchored to a hash. Re-run the same intent agai
 <tr><td><strong>listSources</strong></td><td>Discover sources, capability modules, and function signatures.</td><td>Never executes</td></tr>
 <tr><td><strong>queryData</strong></td><td>Run one query or computation intent; return governed results + provenance.</td><td>Executes</td></tr>
 <tr><td><strong>explainQuery</strong></td><td>Dry-run: resolve or validate an intent without running it.</td><td>Never executes</td></tr>
+<tr><td><strong>getResult</strong></td><td>Fetch the full stored result of an earlier <code>queryData</code> call by its <code>result_id</code>.</td><td>Never executes</td></tr>
 </tbody>
 </table>
 
@@ -317,6 +318,12 @@ Same input as `queryData`, but it **never executes** — a dry run for the model
 The computation `invocation_hash` from `explainQuery` is a **preview**, computed over *unresolved* bindings (`input_hash` empty). It will **not** equal the `invocation_hash` from an executed `queryData` call, which hashes the extracted column data. Use it to confirm the shape of the intent, not as a replay key.
 {% endhint %}
 
+### getResult
+
+Retrieval. When `queryData` returns `truncated: true`, the model preview is capped but the full result was stored — `getResult` fetches it by the `result_id` from the `queryData` output. Input is exactly `{ result_id }`; output is `{ status:"ok", result_id, source_ids, created_at, expires_at, byte_size, value }`, where `value` is the complete stored result (every row/element, not the preview).
+
+The store is in-memory and short-lived: 15-minute default TTL, evicted oldest-first under memory pressure, and only results within `maxOutputBytes` (10 MB default) are stored at all. An unknown, expired, or evicted `result_id` returns a structured `result_not_found` error — re-run the original `queryData` request to regenerate. Read-only and idempotent.
+
 ## Model-context limits
 
 `sqai.tools(options?)` bounds what reaches the model separately from what the runtime executes. Defaults:
@@ -334,7 +341,7 @@ sqai.tools({
 });
 ```
 
-Truncation is always declared, never silent. Query results truncate rows-first, then drop whole rows until the cell budget fits — **a partial row is never shown** (`truncated: true`, `returned_rows < total_rows`). Computation arrays return a `preview` plus the full `element_count`, halved until the byte budget fits; oversized objects return `value: null, truncated: true`. The full result stays retrievable in application code:
+Truncation is always declared, never silent. Query results truncate rows-first, then drop whole rows until the cell budget fits — **a partial row is never shown** (`truncated: true`, `returned_rows < total_rows`). Computation arrays return a `preview` plus the full `element_count`, halved until the byte budget fits; oversized objects return `value: null, truncated: true`. The full result stays retrievable — the model fetches it with the `getResult` tool, application code reads it straight off the client:
 
 ```ts
 const full = await sqai.client.getResult(result_id);

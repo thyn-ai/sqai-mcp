@@ -347,4 +347,4 @@ Every SQAI error is a `SqaiError` with a stable `code` (e.g. `unsupported_operat
 - [Compute & Filtering](compute-and-filtering.md) — the full compute spec, bindings, and runtime module filtering.
 - [Determinism](determinism.md) — what the three hashes cover and the replay guarantee.
 - [Policy](policy.md) — allow-lists (`allowed_sources`, `allowed_fields`, `allowed_functions`) the model can never widen.
-- [AI SDK Tools](ai-sdk-tools.md) — expose SQAI to an agent as three governed tools.
+- [AI SDK Tools](ai-sdk-tools.md) — expose SQAI to an agent as four governed tools.

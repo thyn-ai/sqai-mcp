@@ -5,7 +5,7 @@ description: Build a real agent on SQAI end to end — the discover → plan →
 
 # Building agents with the AI SDK
 
-[AI SDK Tools](../ai-sdk-tools.md) is the reference for the three tools. This is the build guide: how to turn `@thyn-ai/sqai-ai-sdk` into an agent that answers questions about your structured data **and shows its work** — every number anchored to a replayable hash, every reach bounded by code the model can never widen.
+[AI SDK Tools](../ai-sdk-tools.md) is the reference for the four tools. This is the build guide: how to turn `@thyn-ai/sqai-ai-sdk` into an agent that answers questions about your structured data **and shows its work** — every number anchored to a replayable hash, every reach bounded by code the model can never widen.
 
 An SQAI agent is a normal [Vercel AI SDK](https://ai-sdk.dev) loop with one difference: the model does not write SQL or emit numbers from its own head. It authors typed intent — a `QuerySpec` or a `ComputationSpec` — SQAI validates that intent against the hash-pinned capability contract and your application policy, the SQAI runtime executes it, and the answer returns with provenance. The model reaches a **read-only** surface of **5,790 exposed capabilities** (5,780 deterministic plus 10 seed-required simulations) plus your connected sources, and nothing else.
 
@@ -15,7 +15,7 @@ Keep every SQAI import **server-side**. On Next.js set `export const runtime = "
 
 ## What you're building
 
-The agent gets three tools from `sqai.tools()` and does the rest itself:
+The agent gets four tools from `sqai.tools()` and does the rest itself:
 
 <table data-view="cards">
 <thead><tr><th></th><th></th><th></th></tr></thead>
@@ -23,6 +23,7 @@ The agent gets three tools from `sqai.tools()` and does the rest itself:
 <tr><td><strong>listSources</strong></td><td>Discover sources, capability modules, and function signatures.</td><td>Never executes</td></tr>
 <tr><td><strong>queryData</strong></td><td>Run one query or computation intent; return governed results + provenance.</td><td>Executes</td></tr>
 <tr><td><strong>explainQuery</strong></td><td>Dry-run: resolve or validate an intent without running it.</td><td>Never executes</td></tr>
+<tr><td><strong>getResult</strong></td><td>Fetch the full stored result of an earlier <code>queryData</code> call by its <code>result_id</code>.</td><td>Never executes</td></tr>
 </tbody>
 </table>
 
@@ -115,7 +116,7 @@ console.log(`\n${text}\n`);
 
 ## The loop the model runs
 
-Left alone with the three tools, a capable model converges on the same shape every time. Understanding it is how you write a prompt that steers it and a `stopWhen` that fits.
+Left alone with the four tools, a capable model converges on the same shape every time. Understanding it is how you write a prompt that steers it and a `stopWhen` that fits.
 
 {% stepper %}
 {% step %}
@@ -393,7 +394,7 @@ You can also freeze a plan without executing: `explainQuery` (or `sqai.client.ve
 
 ## Building agents in Python
 
-The three governed tools ship in the **TypeScript** package — the Vercel AI SDK is JavaScript-only. In Python, build the same governed agent by wiring the core `sqai` client into your framework's tool definitions: expose thin functions that call `ask` and `compute` and return the plain `dict` result (hashes included). The client enforces the identical contract, policy, and determinism — the hashes are byte-identical to TypeScript.
+The four governed tools ship in the **TypeScript** package — the Vercel AI SDK is JavaScript-only. In Python, build the same governed agent by wiring the core `sqai` client into your framework's tool definitions: expose thin functions that call `ask` and `compute` and return the plain `dict` result (hashes included). The client enforces the identical contract, policy, and determinism — the hashes are byte-identical to TypeScript.
 
 {% tabs %}
 {% tab title="Python" icon="python" %}

@@ -86,7 +86,7 @@ bun add ai zod @thyn-ai/sqai-ai-sdk
 {% endtab %}
 {% endtabs %}
 
-Gives you `createSQAI` → `SQAIToolkit` and the three governed tools `listSources`, `queryData`, `explainQuery`. It depends on `@thyn-ai/sqai` (pulled in automatically) and re-exports `SQAI`, `SqaiError`, and core types. See [Vercel AI SDK tools](ai-sdk-tools.md).
+Gives you `createSQAI` → `SQAIToolkit` and the four governed tools `listSources`, `queryData`, `explainQuery`, `getResult`. It depends on `@thyn-ai/sqai` (pulled in automatically) and re-exports `SQAI`, `SqaiError`, and core types. See [Vercel AI SDK tools](ai-sdk-tools.md).
 
 ## Install the CLI
 
@@ -242,7 +242,7 @@ Keep SQAI imports server-side — it manages a native runtime and reads env cred
 <tbody>
 <tr><td><strong>Quickstart — TypeScript</strong></td><td>Connect a source and get a hashed answer across both planes.</td><td><a href="quickstart-ts.md">quickstart-ts.md</a></td></tr>
 <tr><td><strong>Quickstart — Python</strong></td><td>The same API, byte-identical hashes.</td><td><a href="quickstart-python.md">quickstart-python.md</a></td></tr>
-<tr><td><strong>Vercel AI SDK tools</strong></td><td>Wire the three governed tools into an agent.</td><td><a href="ai-sdk-tools.md">ai-sdk-tools.md</a></td></tr>
+<tr><td><strong>Vercel AI SDK tools</strong></td><td>Wire the four governed tools into an agent.</td><td><a href="ai-sdk-tools.md">ai-sdk-tools.md</a></td></tr>
 <tr><td><strong>CLI reference</strong></td><td>Every <code>doctor</code> and <code>runtime</code> command and flag.</td><td><a href="cli.md">cli.md</a></td></tr>
 <tr><td><strong>Compute &#38; filtering</strong></td><td>The full <code>ComputationSpec</code>, bindings, and module filtering.</td><td><a href="compute-and-filtering.md">compute-and-filtering.md</a></td></tr>
 <tr><td><strong>Licensing &#38; the managed runtime</strong></td><td>How the signed bundle is trusted and provisioned.</td><td><a href="licensing.md">licensing.md</a></td></tr>

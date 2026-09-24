@@ -1,7 +1,7 @@
 /** sqai-mcp — stdio MCP server for SQAI.
  *
- * Serves exactly three tools (listSources, queryData, explainQuery) over
- * newline-delimited JSON-RPC on stdio. stdout carries protocol bytes only;
+ * Serves exactly four tools (listSources, queryData, explainQuery, getResult)
+ * over newline-delimited JSON-RPC on stdio. stdout carries protocol bytes only;
  * diagnostics go to stderr.
  *
  * Introspection (initialize / tools/list) is credential-free. Every tools/call

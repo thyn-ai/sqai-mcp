@@ -1,4 +1,4 @@
-/** SQAI MCP server — the three governed SQAI tools over the Model Context Protocol.
+/** SQAI MCP server — the four governed SQAI tools over the Model Context Protocol.
  *
  * The tool surface is READ, not forked: every advertised inputSchema comes
  * straight off the tool objects built by createSqaiTools(@thyn-ai/sqai-ai-sdk),
@@ -14,9 +14,10 @@
  * tools/call for a registered tool runs ensureLocalLoginKey from
  * @thyn-ai/sqai — verbatim the device-login check the computation plane
  * already runs before provisioning the managed runtime — so listSources,
- * queryData (both kinds) and explainQuery fail with the identical structured
- * login_required payload an unauthenticated computation returns. Unknown-tool
- * answers stay credential-free: they are discovery, not execution.
+ * queryData (both kinds), explainQuery and getResult fail with the identical
+ * structured login_required payload an unauthenticated computation returns.
+ * Unknown-tool answers stay credential-free: they are discovery, not
+ * execution.
  *
  * Never-throw semantics are preserved end to end: the SQAI tools already
  * return structured errors instead of throwing, and every MCP-level failure
@@ -45,11 +46,11 @@ import {
 
 export const SERVER_NAME = "sqai-mcp";
 
-/** Fixed registration order — the tool surface is exactly these three. */
-const TOOL_NAMES = ["listSources", "queryData", "explainQuery"] as const;
+/** Fixed registration order — the tool surface is exactly these four. */
+const TOOL_NAMES = ["listSources", "queryData", "explainQuery", "getResult"] as const;
 export type SqaiToolName = (typeof TOOL_NAMES)[number];
 
-/** MCP spec annotations for the SQAI tools. All three are read-only,
+/** MCP spec annotations for the SQAI tools. All four are read-only,
  * non-destructive, deterministic (repeated calls with the same input return
  * the same output — queryData proves it with plan_hash / invocation_hash) and
  * operate over local, explicitly connected sources rather than the open world. */
@@ -70,6 +71,13 @@ const TOOL_ANNOTATIONS: Record<SqaiToolName, ToolAnnotations> = {
   },
   explainQuery: {
     title: "Explain a query (dry-run)",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  getResult: {
+    title: "Fetch a full stored result",
     readOnlyHint: true,
     destructiveHint: false,
     idempotentHint: true,
@@ -258,7 +266,7 @@ export interface SqaiMcpServerOptions {
   version: string;
 }
 
-/** Build the MCP server around the three SQAI tools. Construction connects
+/** Build the MCP server around the four SQAI tools. Construction connects
  * nothing: the toolkit's lazy-source behavior means initialize and tools/list
  * work with zero env and zero credentials. */
 export function buildSqaiMcpServer(options: SqaiMcpServerOptions): Server {

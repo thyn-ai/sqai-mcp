@@ -2,14 +2,14 @@
  *
  * Covers the contracts that make this a faithful MCP projection of the
  * AI-SDK tool surface:
- *   - exactly the three governed tools register, in a fixed order;
+ *   - exactly the four governed tools register, in a fixed order;
  *   - advertised descriptions are the tool objects' descriptions plus the
  *     uniform-gate disclosure (the only MCP-layer addition);
  *   - advertised inputSchemas equal z.toJSONSchema of the exported Zod
  *     schemas from @thyn-ai/sqai-ai-sdk;
  *   - spec annotations on every tool;
  *   - initialize/tools/list need no credentials;
- *   - the uniform license gate: with no login EVERY tools/call (all three
+ *   - the uniform license gate: with no login EVERY tools/call (all four
  *     tools, queryData in both kinds) returns the computation plane's
  *     login_required payload byte-for-byte, and unknown_tool stays
  *     credential-free;
@@ -25,6 +25,7 @@ import {
   createSQAI,
   createSqaiTools,
   explainQueryInputSchema,
+  getResultInputSchema,
   listSourcesInputSchema,
   queryDataInputSchema,
   type QueryDataInput,
@@ -143,9 +144,14 @@ function withStubbedLicenseEnv<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 describe("toolRegistry", () => {
-  it("registers exactly the three SQAI tools, in fixed order", () => {
+  it("registers exactly the four SQAI tools, in fixed order", () => {
     const registry = toolRegistry(toolsFor());
-    expect(registry.map(entry => entry.name)).toEqual(["listSources", "queryData", "explainQuery"]);
+    expect(registry.map(entry => entry.name)).toEqual([
+      "listSources",
+      "queryData",
+      "explainQuery",
+      "getResult",
+    ]);
   });
 
   it("carries the live tool objects (no copies, no forks)", () => {
@@ -161,11 +167,12 @@ describe("listToolsResult", () => {
   const registry = toolRegistry(toolsFor());
   const result = listToolsResult(registry);
 
-  it("advertises the three tools", () => {
+  it("advertises the four tools", () => {
     expect(result.tools.map(tool => tool.name)).toEqual([
       "listSources",
       "queryData",
       "explainQuery",
+      "getResult",
     ]);
   });
 
@@ -185,6 +192,7 @@ describe("listToolsResult", () => {
     expect(byName.get("listSources")).toEqual(expectedJsonSchema(listSourcesInputSchema));
     expect(byName.get("queryData")).toEqual(expectedJsonSchema(queryDataInputSchema));
     expect(byName.get("explainQuery")).toEqual(expectedJsonSchema(explainQueryInputSchema));
+    expect(byName.get("getResult")).toEqual(expectedJsonSchema(getResultInputSchema));
   });
 
   it("gives every advertised schema a top-level type of object (MCP spec)", () => {
@@ -289,6 +297,52 @@ describe("callTool", () => {
     });
   });
 
+  it("fetches the full stored result via getResult after a truncated queryData call", async () => {
+    await withStubbedLicenseEnv(async () => {
+      // maxRowsToModel: 1 forces truncation so the retrieval path is load-bearing.
+      const registry = toolRegistry(
+        createSqaiTools(createSQAI({ mode: "local", sources: [{ data: ORDERS, name: "orders" }] }), {
+          maxRowsToModel: 1,
+        }),
+      );
+      const query = await callTool(registry, "queryData", {
+        version: "1",
+        kind: "query",
+        spec: { metric: "revenue", aggregation: "sum", group_by: "region", source: "orders" },
+      });
+      expect(query.isError).toBeUndefined();
+      const queryOutput = query.structuredContent as Record<string, unknown>;
+      expect(queryOutput.status).toBe("ok");
+      expect(queryOutput.truncated).toBe(true);
+      expect(typeof queryOutput.result_id).toBe("string");
+
+      const fetched = await callTool(registry, "getResult", { result_id: queryOutput.result_id });
+      expect(fetched.isError).toBeUndefined();
+      const output = fetched.structuredContent as Record<string, unknown>;
+      expect(output.status).toBe("ok");
+      expect(output.result_id).toBe(queryOutput.result_id);
+      expect(output.source_ids).toEqual(["orders"]);
+      // The full grouped result — both rows, not the 1-row preview.
+      expect(output.value).toEqual([
+        { region: "east", revenue: 900.5, count: 2 },
+        { region: "west", revenue: 619, count: 1 },
+      ]);
+    });
+  });
+
+  it("maps an unknown result_id to a structured result_not_found error, never a crash", async () => {
+    await withStubbedLicenseEnv(async () => {
+      const result = await callTool(toolRegistry(toolsFor()), "getResult", {
+        result_id: "no-such-result",
+      });
+      expect(result.isError).toBe(true);
+      const output = result.structuredContent as Record<string, unknown>;
+      expect(output.status).toBe("error");
+      expect(output.code).toBe("result_not_found");
+      expect(output.retryable).toBe(false);
+    });
+  });
+
   it("rejects invalid arguments with a structured invalid_arguments error", async () => {
     await withStubbedLicenseEnv(async () => {
       const result = await callTool(toolRegistry(toolsFor()), "queryData", { kind: "query" });
@@ -333,6 +387,7 @@ describe("uniform license gate", () => {
     ["queryData", QUERY_ARGS],
     ["queryData", COMPUTATION_ARGS],
     ["explainQuery", QUERY_ARGS],
+    ["getResult", { result_id: "no-such-result" }],
   ];
 
   it.each(GATED_CALLS)(

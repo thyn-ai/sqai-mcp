@@ -289,4 +289,4 @@ flowchart TD
 - [Compute & filtering](compute-and-filtering.md) — the full `ComputationSpec`, argument assembly, and simulations.
 - [Determinism & provenance](determinism.md) — the three hashes and the determinism envelope, field by field.
 - [Policy & governance](policy.md) — allow-lists, enforcement points, and the narrow-only rule.
-- [Vercel AI SDK tools](ai-sdk-tools.md) — the three tools that expose this pipeline to a model.
+- [Vercel AI SDK tools](ai-sdk-tools.md) — the four tools that expose this pipeline to a model.

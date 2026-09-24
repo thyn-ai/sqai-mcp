@@ -127,6 +127,10 @@ export const listSourcesInputSchema = z.object({
     .describe("List a module's functions with exact signatures."),
 });
 
+export const getResultInputSchema = z.object({
+  result_id: z.string().describe("The result_id from a queryData ok result."),
+});
+
 // ── Tool output ──────────────────────────────────────────────────────────────
 
 const cellSchema = z.union([z.number(), z.string(), z.boolean(), z.null()]);
@@ -311,6 +315,22 @@ export const explainQueryOutputSchema = z.union([
   errorOutputSchema,
 ]);
 
+/** The stored record, verbatim minus tenant_id (the store's internal
+ * authorization metadata — not result data). `value` is whatever the full
+ * query/computation result was: arbitrary JSON, so z.unknown() transports it
+ * without a narrowing that could reject a legal stored value. */
+export const getResultOkOutputSchema = z.object({
+  status: z.literal("ok"),
+  result_id: z.string(),
+  source_ids: z.array(z.string()),
+  created_at: z.number(),
+  expires_at: z.number(),
+  byte_size: z.number(),
+  value: z.unknown(),
+});
+
+export const getResultOutputSchema = z.union([getResultOkOutputSchema, errorOutputSchema]);
+
 // ── Inferred types ───────────────────────────────────────────────────────────
 
 export type QueryDataInput = z.infer<typeof queryDataInputSchema>;
@@ -319,6 +339,8 @@ export type ListSourcesInput = z.infer<typeof listSourcesInputSchema>;
 export type ListSourcesOutput = z.infer<typeof listSourcesOutputSchema>;
 export type ExplainQueryInput = z.infer<typeof explainQueryInputSchema>;
 export type ExplainQueryOutput = z.infer<typeof explainQueryOutputSchema>;
+export type GetResultInput = z.infer<typeof getResultInputSchema>;
+export type GetResultOutput = z.infer<typeof getResultOutputSchema>;
 export type ErrorOutput = z.infer<typeof errorOutputSchema>;
 export type ClarificationOutput = z.infer<typeof clarificationOutputSchema>;
 export type RejectedOutput = z.infer<typeof rejectedOutputSchema>;

@@ -11,6 +11,8 @@ import {
   explainQueryOkQueryOutputSchema,
   filterConditionSchema,
   functionListOutputSchema,
+  getResultInputSchema,
+  getResultOutputSchema,
   listSourcesInputSchema,
   moduleListOutputSchema,
   queryDataInputSchema,
@@ -366,6 +368,31 @@ describe("output schema variants", () => {
         matched_signature: "stats.median(v: float64[], n: int) -> float64",
         invocation_hash: "a".repeat(64),
         seed_required: false,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("validates getResult input and both output variants", () => {
+    expect(getResultInputSchema.safeParse({ result_id: "abc" }).success).toBe(true);
+    expect(getResultInputSchema.safeParse({}).success).toBe(false);
+    expect(
+      getResultOutputSchema.safeParse({
+        status: "ok",
+        result_id: "abc",
+        source_ids: ["orders"],
+        created_at: 1_000,
+        expires_at: 901_000,
+        byte_size: 128,
+        value: [{ region: "east", revenue: 2130.5, count: 5 }],
+      }).success,
+    ).toBe(true);
+    expect(
+      getResultOutputSchema.safeParse({
+        status: "error",
+        code: "result_not_found",
+        message: "No such result for this principal.",
+        retryable: false,
+        request_id: null,
       }).success,
     ).toBe(true);
   });

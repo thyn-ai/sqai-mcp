@@ -352,7 +352,7 @@ except SqaiError as error:
 <thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead>
 <tbody>
 <tr><td><strong>Troubleshooting</strong></td><td>Every error <code>code</code> mapped to its one-line fix, plus <code>sqai doctor</code> and runtime diagnostics.</td><td><a href="../troubleshooting.md">troubleshooting.md</a></td></tr>
-<tr><td><strong>Vercel AI SDK tool</strong></td><td>The three tools that turn these statuses into something a model can self-correct against.</td><td><a href="../ai-sdk-tools.md">ai-sdk-tools.md</a></td></tr>
+<tr><td><strong>Vercel AI SDK tool</strong></td><td>The four tools that turn these statuses into something a model can self-correct against.</td><td><a href="../ai-sdk-tools.md">ai-sdk-tools.md</a></td></tr>
 <tr><td><strong>Determinism &#38; provenance</strong></td><td>What the three hashes and the determinism envelope on every <code>ok</code> result cover.</td><td><a href="../determinism.md">determinism.md</a></td></tr>
 <tr><td><strong>Policy &#38; governance</strong></td><td>The allow-lists behind <code>policy_denied_*</code> — narrow-only, enforced in code.</td><td><a href="../policy.md">policy.md</a></td></tr>
 </tbody>

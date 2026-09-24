@@ -1,6 +1,6 @@
 # @thyn-ai/sqai-ai-sdk
 
-Vercel AI SDK tools for SQAI. It exposes the governed `listSources`, `queryData`, and `explainQuery` tools over an SQAI client.
+Vercel AI SDK tools for SQAI. It exposes the governed `listSources`, `queryData`, `explainQuery`, and `getResult` tools over an SQAI client.
 
 Install:
 
