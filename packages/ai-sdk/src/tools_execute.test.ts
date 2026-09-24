@@ -8,7 +8,12 @@ import { describe, expect, it, vi } from "vitest";
 import type { ComputeResult } from "@thyn-ai/sqai";
 
 import { createSQAI } from "./toolkit.js";
-import { queryDataOutputSchema, explainQueryOutputSchema, listSourcesOutputSchema } from "./schemas.js";
+import {
+  queryDataOutputSchema,
+  explainQueryOutputSchema,
+  getResultOutputSchema,
+  listSourcesOutputSchema,
+} from "./schemas.js";
 import type { SqaiTool } from "./tools.js";
 
 /** Execute a tool the way the AI SDK would, with a typed (non-streaming) result. */
@@ -295,6 +300,55 @@ describe("queryData — computation kind (dispatch mocked)", () => {
     expect(output.retryable).toBe(false);
     expect(Array.isArray(output.nearest_matches)).toBe(true);
     expect((output.nearest_matches as string[]).length).toBeGreaterThan(0);
+  });
+});
+
+describe("getResult", () => {
+  it("returns the full stored result of a real queryData call — beyond the model preview", async () => {
+    const toolkit = ordersToolkit();
+    const tools = toolkit.tools({ maxRowsToModel: 2 });
+    const query = await run(tools.queryData, 
+      {
+        version: "1",
+        kind: "query",
+        spec: { metric: "revenue", aggregation: "sum", group_by: "region", source: "orders" },
+      },
+    );
+    if (query.status !== "ok" || query.kind !== "query") throw new Error("expected an ok query result");
+    expect(query.truncated).toBe(true);
+    expect(query.returned_rows).toBe(2);
+    expect(query.result_id).toBeDefined();
+
+    const output = await run(tools.getResult, { result_id: query.result_id as string });
+    expect(getResultOutputSchema.safeParse(output).success).toBe(true);
+    expect(output.status).toBe("ok");
+    if (output.status !== "ok") return;
+    expect(output.result_id).toBe(query.result_id);
+    expect(output.source_ids).toEqual(["orders"]);
+    expect(output.byte_size).toBeGreaterThan(0);
+    expect(output.expires_at).toBeGreaterThan(output.created_at);
+    // All 3 rows — the preview showed only 2.
+    expect(output.value).toEqual([
+      { region: "east", revenue: 2130.5, count: 5 },
+      { region: "west", revenue: 1519, count: 4 },
+      { region: "north", revenue: 1000, count: 3 },
+    ]);
+  });
+
+  it("returns a structured result_not_found error for an unknown result_id — never throws", async () => {
+    const tools = ordersToolkit().tools();
+    const output = await run(tools.getResult, { result_id: "no-such-result" });
+    expect(getResultOutputSchema.safeParse(output).success).toBe(true);
+    expect(output).toMatchObject({ status: "error", code: "result_not_found", retryable: false });
+  });
+
+  it("answers from the store even when the source connection failed", async () => {
+    const toolkit = createSQAI({ mode: "local", sources: [[]] }); // empty source fails upstream
+    const stored = toolkit.client.storeResult([1, 2, 3], []);
+    const output = await run(toolkit.tools().getResult, { result_id: stored });
+    expect(output.status).toBe("ok");
+    if (output.status !== "ok") return;
+    expect(output.value).toEqual([1, 2, 3]);
   });
 });
 

@@ -7,7 +7,7 @@
  *
  * The headline contract: with ZERO SQAI_* env the server answers initialize
  * and tools/list (the toolkit's lazy-source behavior), so any MCP host can
- * introspect the three governed tools with no credentials and no sources —
+ * introspect the four governed tools with no credentials and no sources —
  * while every tools/call runs the uniform device-login gate and returns the
  * computation plane's structured login_required until `sqai login` (or an
  * API key) is present. */
@@ -162,7 +162,12 @@ describe("sqai-mcp stdio e2e", () => {
     expect([...session.responses.keys()]).toEqual([1, 2]);
 
     const tools = (resultOf(session, 2).tools ?? []) as Array<Record<string, unknown>>;
-    expect(tools.map(tool => tool.name)).toEqual(["listSources", "queryData", "explainQuery"]);
+    expect(tools.map(tool => tool.name)).toEqual([
+      "listSources",
+      "queryData",
+      "explainQuery",
+      "getResult",
+    ]);
     for (const tool of tools) {
       expect(tool.annotations).toMatchObject({
         readOnlyHint: true,
@@ -200,14 +205,15 @@ describe("sqai-mcp stdio e2e", () => {
           name: "explainQuery",
           arguments: { version: "1", kind: "query", spec: { metric: "revenue" } },
         }),
-        // After four gated calls the server must still be up for introspection.
-        rpc(6, "tools/list"),
+        rpc(6, "tools/call", { name: "getResult", arguments: { result_id: "no-such-result" } }),
+        // After five gated calls the server must still be up for introspection.
+        rpc(7, "tools/list"),
       ],
       { SQAI_HOME: emptyHome },
     );
 
     expect(session.exitCode).toBe(0);
-    for (const id of [2, 3, 4, 5]) {
+    for (const id of [2, 3, 4, 5, 6]) {
       expect(resultOf(session, id).isError).toBe(true);
       expect(callPayload(session, id)).toEqual({
         status: "error",
@@ -219,8 +225,13 @@ describe("sqai-mcp stdio e2e", () => {
         request_id: null,
       });
     }
-    const tools = (resultOf(session, 6).tools ?? []) as Array<Record<string, unknown>>;
-    expect(tools.map(tool => tool.name)).toEqual(["listSources", "queryData", "explainQuery"]);
+    const tools = (resultOf(session, 7).tools ?? []) as Array<Record<string, unknown>>;
+    expect(tools.map(tool => tool.name)).toEqual([
+      "listSources",
+      "queryData",
+      "explainQuery",
+      "getResult",
+    ]);
   }, 45_000);
 
   it("serves a real deterministic query over an inline source from SQAI_SOURCES with a cached login", async () => {
@@ -273,6 +284,8 @@ describe("sqai-mcp stdio e2e", () => {
       ],
     });
     expect(typeof query.plan_hash).toBe("string");
+    // The full result is stored; the handle for the getResult tool rides along.
+    expect(typeof query.result_id).toBe("string");
 
     // Unknown tool: structured isError result, never a crash.
     const unknown = resultOf(session, 3);

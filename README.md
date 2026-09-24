@@ -41,7 +41,7 @@ signed managed runtime transparently on first use.
 
 ## MCP server
 
-The same three governed tools are available to any MCP host (Claude Desktop,
+The same four governed tools are available to any MCP host (Claude Desktop,
 Cursor, …) as a stdio server — descriptions, Zod schemas, and execute
 functions are read straight off the AI-SDK tool objects, never forked:
 
@@ -64,7 +64,7 @@ npx @thyn-ai/sqai-mcp
 ```
 
 Introspection (`initialize` / `tools/list`) needs no credentials — zero
-environment is a valid configuration. Executing any of the three tools requires
+environment is a valid configuration. Executing any of the four tools requires
 a free community login (`sqai login` once / device registration, or
 `SQAI_API_KEY`) — fully offline thereafter; without it every tools/call returns
 a structured `login_required` error. `SQAI_DEPLOYMENT_URL` keeps its usual

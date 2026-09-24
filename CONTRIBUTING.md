@@ -2,8 +2,9 @@
 
 Thank you for your interest in contributing. This repository holds the
 **SQAI MCP server** (`@thyn-ai/sqai-mcp` on npm) and the two library layers
-beneath it — the three governed, deterministic, read-only structured-data
-tools (`listSources`, `queryData`, `explainQuery`) for any MCP host. These
+beneath it — the four governed, deterministic, read-only structured-data
+tools (`listSources`, `queryData`, `explainQuery`, `getResult`) for any MCP
+host. These
 are the parts of the product that are open source and meant to be forked,
 read, and improved by anyone.
 

@@ -23,6 +23,10 @@ The contract hash is the compatibility key. If two builds agree on it, they comp
 | Capabilities | 5,790 exposed read-only (5,780 deterministic + 10 seed-required simulations) of 6,084 total |
 | Requires | Node ≥ 20, Python 3.14 |
 
+## 0.1.20
+
+- The AI-SDK/MCP tool surface gains a fourth tool, `getResult`: it fetches the full stored result of an earlier `queryData` call by its `result_id`, closing the dead end where truncated results were advertised as retrievable with no tool to retrieve them. The store is unchanged (in-memory, 15-minute default TTL, `maxOutputBytes`-capped); an unknown, expired, or evicted `result_id` returns a structured `result_not_found` error. Same tested substrate pair as 0.1.14 — the capability contract and hashes are untouched.
+
 ## 0.1.14
 
 - Tracks the substrate's Mojo 1.0.0 release line: pins the graduated SQAI runtime distribution and its SDK pair at `1.0.9` (the deprecated pre-graduation core package name is no longer pinned).

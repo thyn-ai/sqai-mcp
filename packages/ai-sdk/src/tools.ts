@@ -1,9 +1,11 @@
-/** The three SQAI tools for the Vercel AI SDK.
+/** The four SQAI tools for the Vercel AI SDK.
  *
  * listSources — discovery (sources, capability modules, function signatures).
  * queryData   — execute one query or computation intent; never throws.
  * explainQuery — dry-run: resolve/verify a query, or validate a computation
  *                against the capability contract without executing it.
+ * getResult   — fetch the full stored result of an earlier queryData call by
+ *               its result_id; never throws.
  */
 
 import { tool, type Tool } from "ai";
@@ -25,6 +27,8 @@ import {
 import {
   explainQueryInputSchema,
   explainQueryOutputSchema,
+  getResultInputSchema,
+  getResultOutputSchema,
   listSourcesInputSchema,
   listSourcesOutputSchema,
   queryDataInputSchema,
@@ -32,6 +36,8 @@ import {
   type ClarificationOutput,
   type ErrorOutput,
   type ExplainQueryOutput,
+  type GetResultInput,
+  type GetResultOutput,
   type ListSourcesInput,
   type ListSourcesOutput,
   type QueryDataInput,
@@ -298,6 +304,7 @@ export interface SqaiToolSet extends Record<string, Tool> {
   listSources: SqaiTool<ListSourcesInput, ListSourcesOutput>;
   queryData: SqaiTool<QueryDataInput, QueryDataOutput>;
   explainQuery: SqaiTool<QueryDataInput, ExplainQueryOutput>;
+  getResult: SqaiTool<GetResultInput, GetResultOutput>;
 }
 
 export function createSqaiTools(toolkit: SQAIToolkit, options: SqaiToolsOptions = {}): SqaiToolSet {
@@ -346,7 +353,7 @@ export function createSqaiTools(toolkit: SQAIToolkit, options: SqaiToolsOptions 
       "field names. Use kind 'computation' for math (statistics, financial, vector/matrix, simulation) " +
       "over arrays: never paste large data into args — use bindings to pull columns from connected " +
       "sources. Simulation modules require a seed. Large results are truncated for context; the full " +
-      "result stays retrievable via result_id.",
+      "result stays retrievable — pass the returned result_id to the getResult tool.",
     inputSchema: queryDataInputSchema,
     outputSchema: queryDataOutputSchema,
     execute: async (input: QueryDataInput) => {
@@ -383,6 +390,37 @@ export function createSqaiTools(toolkit: SQAIToolkit, options: SqaiToolsOptions 
           return await explainQueryPlan(input.spec);
         }
         return explainComputation(input.spec);
+      } catch (error) {
+        return toErrorOutput(error);
+      }
+    },
+  });
+
+  const getResult = tool({
+    description:
+      "Fetch the full stored result of an earlier queryData call by its result_id. Use it when " +
+      "queryData returned truncated: true — the preview is capped for context, this returns every " +
+      "stored row/element (only results within the output-size cap, 10 MB by default, get a " +
+      "result_id at all). The store is in-memory and short-lived: default 15-minute TTL, evicted " +
+      "oldest-first under memory pressure. An unknown, expired, or evicted result_id returns a " +
+      "structured result_not_found error — re-run the original queryData request to regenerate. " +
+      "Read-only and idempotent; takes no other parameters.",
+    inputSchema: getResultInputSchema,
+    outputSchema: getResultOutputSchema,
+    execute: async (input: GetResultInput) => {
+      // No ensureReady: the result store is in-process and source-independent —
+      // a failed source connection must not block fetching a stored result.
+      try {
+        const record = client.getResult(input.result_id);
+        return {
+          status: "ok" as const,
+          result_id: record.result_id,
+          source_ids: record.source_ids,
+          created_at: record.created_at,
+          expires_at: record.expires_at,
+          byte_size: record.byte_size,
+          value: record.value,
+        };
       } catch (error) {
         return toErrorOutput(error);
       }
@@ -514,5 +552,5 @@ export function createSqaiTools(toolkit: SQAIToolkit, options: SqaiToolsOptions 
     };
   }
 
-  return { listSources, queryData, explainQuery };
+  return { listSources, queryData, explainQuery, getResult };
 }

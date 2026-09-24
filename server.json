@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.thyn-ai/sqai",
   "title": "SQAI — deterministic, read-only structured data",
-  "description": "SQAI MCP server — three governed, deterministic, read-only data tools. Free login to execute.",
+  "description": "SQAI MCP server — four governed, deterministic, read-only data tools. Free login to execute.",
   "repository": {
     "url": "https://github.com/thyn-ai/sqai-mcp",
     "source": "github"
   },
   "websiteUrl": "https://sqai.com",
-  "version": "0.1.18",
+  "version": "0.1.20",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@thyn-ai/sqai-mcp",
-      "version": "0.1.18",
+      "version": "0.1.20",
       "transport": {
         "type": "stdio"
       },
