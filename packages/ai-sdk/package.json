@@ -2,6 +2,7 @@
   "name": "@thyn-ai/sqai-ai-sdk",
   "version": "0.1.20",
   "description": "Vercel AI SDK tools for SQAI (Structured Query AI) — deterministic, read-only structured-data tools for AI agents.",
+  "author": { "name": "Thyn", "url": "https://thyn.ai" },
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
