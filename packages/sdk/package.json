@@ -35,7 +35,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "algenta-sdk": "1.0.17"
+    "algenta-sdk": "1.0.31"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
