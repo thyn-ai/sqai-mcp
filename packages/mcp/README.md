@@ -4,6 +4,8 @@
 
 **SQAI (Structured Query AI) as an MCP server** — the four governed, deterministic, read-only structured-data tools for any MCP host (Claude Desktop, Cursor, and friends), over stdio.
 
+> ⭐ If SQAI saved you time, a [star on GitHub](https://github.com/thyn-ai/sqai-mcp) helps others find it.
+
 The tool surface is not a fork: this server reads descriptions, Zod input schemas, and execute functions straight off the tool objects in [`@thyn-ai/sqai-ai-sdk`](https://www.npmjs.com/package/@thyn-ai/sqai-ai-sdk). One source of truth, projected to MCP.
 
 ## Install & run
